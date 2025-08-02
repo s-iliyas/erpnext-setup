@@ -9,3 +9,7 @@ healthcare.swynix.com {
 hrms.swynix.com {
     reverse_proxy localhost:8082
 }
+
+restaurant.swynix.com {
+    reverse_proxy localhost: 8083
+}

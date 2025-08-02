@@ -1,0 +1,50 @@
+services:
+  redis-shared:
+    image: redis:7-alpine
+    container_name: redis-shared
+    ports:
+      - "6370:6379"
+    volumes:
+      - redis_shared_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - frappe-network
+
+  frappe-ury:
+    build:
+      context: .
+      dockerfile: Dockerfile.ury
+    container_name: frappe-ury
+    ports:
+      - "8083:8000"
+      - "3310:3306"
+    volumes:
+      - frappe_sites_ury:/home/frappe/frappe-bench/sites
+      - mariadb_data_ury:/var/lib/mysql
+      - frappe_logs_ury:/var/log/supervisor
+    environment:
+      - SITE_NAME=ury.swynix.com
+      - MARIADB_ROOT_PASSWORD=rootpassword
+      - ADMIN_PASSWORD=admin
+      - REDIS_DB=3
+    restart: unless-stopped
+    hostname: frappe-ury
+    depends_on:
+      - redis-shared
+    networks:
+      - frappe-network
+
+networks:
+  frappe-network:
+    driver: bridge
+
+volumes:
+  frappe_sites_ury:
+    driver: local
+  mariadb_data_ury:
+    driver: local
+  frappe_logs_ury:
+    driver: local
+  redis_shared_data:
+    driver: local

@@ -1,14 +1,14 @@
-.PHONY: up down up-all down-all up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-caddy down-caddy up-combo down-combo rebuild-erpnext restart-erpnext clean-erpnext clean-all status logs redis-status redis-cli help
+.PHONY: up down up-all down-all up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-ury down-ury up-caddy down-caddy up-combo down-combo rebuild-erpnext restart-erpnext clean-erpnext clean-all status logs redis-status redis-cli help
 
 # Resource optimized setup - runs all services with shared Redis
 up-all:
 	@echo "🚀 Starting all services with shared Redis (optimized for 2CPU/4GB)..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml up -d --build
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-ury.yml -f docker-compose-caddy.yml up -d --build
 	@echo "✅ All services starting... Check status with 'make status'"
 
 down-all:
 	@echo "🛑 Stopping all services..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml down
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-ury.yml -f docker-compose-caddy.yml down
 	@echo "✅ All services stopped"
 
 # Combination setups (recommended for better resource usage)
@@ -42,6 +42,13 @@ up-hrms:
 
 down-hrms:
 	docker compose -f docker-compose-hrms.yml down
+
+up-ury:
+	@echo "🚀 Starting Ury with shared Redis..."
+	docker compose -f docker-compose-ury.yml up -d --build
+
+down-ury:
+	docker compose -f docker-compose-ury.yml down
 
 up-caddy:
 	docker compose -f docker-compose-caddy.yml up -d --build
@@ -78,6 +85,8 @@ logs:
 	@docker logs frappe-healthcare --tail 5 2>/dev/null || echo "Healthcare not running"
 	@echo "--- HRMS ---"
 	@docker logs frappe-hrms --tail 5 2>/dev/null || echo "HRMS not running"
+	@echo "--- Ury ---"
+	@docker logs frappe-ury --tail 5 2>/dev/null || echo "Ury not running"
 
 redis-status:
 	@echo "🔴 Redis Status:"
@@ -95,7 +104,7 @@ clean-erpnext:
 
 clean-all:
 	@echo "🧹 Cleaning all Docker resources..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml down
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-ury.yml -f docker-compose-caddy.yml down
 	docker system prune -af
 	docker volume prune -f
 	@echo "✅ Cleanup complete"
@@ -105,11 +114,12 @@ help:
 	@echo "📚 ERPNext Resource Optimized Setup Commands:"
 	@echo ""
 	@echo "🚀 Quick Start:"
-	@echo "  make up-all        - Start all services (ERPNext + Healthcare + HRMS + Caddy)"
+	@echo "  make up-all        - Start all services (ERPNext + Healthcare + HRMS + Ury + Caddy)"
 	@echo "  make up-combo      - Start ERPNext + Healthcare (recommended)"
 	@echo "  make up-erpnext    - Start only ERPNext"
 	@echo "  make up-healthcare - Start only Healthcare"
 	@echo "  make up-hrms       - Start only HRMS"
+	@echo "  make up-ury        - Start only Ury"
 	@echo ""
 	@echo "🛑 Stop Services:"
 	@echo "  make down-all      - Stop all services"
@@ -130,3 +140,4 @@ help:
 	@echo "  ERPNext:   http://localhost:8080"
 	@echo "  Healthcare: http://localhost:8081"
 	@echo "  HRMS:      http://localhost:8082"
+	@echo "  Ury:       http://localhost:8083"
