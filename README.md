@@ -75,9 +75,9 @@ sudo mariadb-secure-installation
 * Enter current root password: just press **Enter** (if none set)
 * Switch to unix\_socket: **n**
 * Change root password: **Y**, then set it
-* Remove anonymous users: **Y**
+* Remove anonymous users: **n**
 * Disallow remote root login: **n**
-* Remove test database: **Y**
+* Remove test database: **n**
 * Reload privilege tables: **Y**
 
 ---
@@ -149,9 +149,21 @@ rm wkhtmltox_*.deb
 ## 🧪 Setup Python Virtualenv
 
 ```bash
-pip install virtualenv
-virtualenv env
+sudo apt install  python3-venv -y
+python3 -m venv env
 source env/bin/activate
+
+# ( or )
+
+# Install virtualenv if not already installed
+pip install virtualenv
+
+# Create a virtual environment
+virtualenv env
+
+# Activate the environment
+source env/bin/activate
+
 ```
 
 ---
@@ -159,14 +171,14 @@ source env/bin/activate
 ## 🚀 Install Frappe Bench CLI
 
 ```bash
-pip install frappe-bench # (can use any name frappe-bench/erp/core/..etc)
-bench --version  # should print e.g. 5.25.9
+pip install frappe-bench 
+bench --version
 ```
 
 ### Initialize Bench:
 
 ```bash
-bench init frappe-bench
+bench init --frappe-branch version-15 frappe-bench # (can use any name frappe-bench/erp/core/..etc)
 cd frappe-bench
 ```
 
@@ -174,6 +186,27 @@ cd frappe-bench
 
 ```bash
 bench new-site iliyas.com
+
+# can add multiple sites
+bench new-site iliyas.co
+
+bench new-site iliyas.in
+
+# you have select one site
+
+bench use iliyas.com
+
+# get erpnext 
+
+bench get-app erpnext  --branch version-15 
+
+# install erpnext in bench
+
+bench --site iliyas.com install-app erpnext
+
+bench start
+
+bench --site iliyas.com serve --port 8080
 ```
 
 Follow prompts:
@@ -184,6 +217,14 @@ Follow prompts:
 * SystemSettings.enable\_scheduler is UNSET (you can enable it later)
 
 ---
+
+For production
+
+```bash
+git clone https://github.com/frappe/frappe_docker
+cd frappe_docker
+docker compose -f pwd.yml up -d --build
+```
 
 ✅ **Done!**
 You now have a working setup of Frappe Framework with MariaDB 12 and all necessary dependencies.
