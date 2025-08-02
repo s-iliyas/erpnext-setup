@@ -200,7 +200,9 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         nvm use $NODE_VERSION && 
         bench new-site $SITE_NAME --mariadb-root-password rootpassword --admin-password admin && 
         bench use $SITE_NAME && 
-        bench install-app erpnext
+        bench install-app erpnext &&
+        bench --site $SITE_NAME migrate && 
+        bench build
     "
 fi
 
