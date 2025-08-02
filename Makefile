@@ -3,12 +3,12 @@
 # Resource optimized setup - runs all services with shared Redis
 up-all:
 	@echo "🚀 Starting all services with shared Redis (optimized for 2CPU/4GB)..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml up -d --build
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml up -d --build
 	@echo "✅ All services starting... Check status with 'make status'"
 
 down-all:
 	@echo "🛑 Stopping all services..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml down
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml down
 	@echo "✅ All services stopped"
 
 # Combination setups (recommended for better resource usage)
@@ -95,7 +95,7 @@ clean-erpnext:
 
 clean-all:
 	@echo "🧹 Cleaning all Docker resources..."
-	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml down
+	docker compose -f docker-compose.yml -f docker-compose-healthcare.yml -f docker-compose-hrms.yml -f docker-compose-caddy.yml down
 	docker system prune -af
 	docker volume prune -f
 	@echo "✅ Cleanup complete"
@@ -105,7 +105,7 @@ help:
 	@echo "📚 ERPNext Resource Optimized Setup Commands:"
 	@echo ""
 	@echo "🚀 Quick Start:"
-	@echo "  make up-all        - Start all services (ERPNext + Healthcare + HRMS)"
+	@echo "  make up-all        - Start all services (ERPNext + Healthcare + HRMS + Caddy)"
 	@echo "  make up-combo      - Start ERPNext + Healthcare (recommended)"
 	@echo "  make up-erpnext    - Start only ERPNext"
 	@echo "  make up-healthcare - Start only Healthcare"
