@@ -1,0 +1,28 @@
+services:
+  frappe-hrms:
+    build:
+      context: .
+      dockerfile: Dockerfile.hrms
+    container_name: frappe-hrms
+    ports:
+      - "8082:8000"
+      - "3309:3306"
+      - "6382:6379"
+    volumes:
+      - frappe_sites_hrms:/home/frappe/frappe-bench/sites
+      - mariadb_data_hrms:/var/lib/mysql
+      - frappe_logs_hrms:/var/log/supervisor
+    environment:
+      - SITE_NAME=hrms.swynix.com
+      - MARIADB_ROOT_PASSWORD=rootpassword
+      - ADMIN_PASSWORD=admin
+    restart: unless-stopped
+    hostname: frappe-hrms
+
+volumes:
+  frappe_sites_hrms:
+    driver: local
+  mariadb_data_hrms:
+    driver: local
+  frappe_logs_hrms:
+    driver: local

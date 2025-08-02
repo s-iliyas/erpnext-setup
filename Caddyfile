@@ -1,0 +1,11 @@
+erp.swynix.com {
+    reverse_proxy localhost:8080
+}
+
+healthcare.swynix.com {
+    reverse_proxy localhost:8081
+}
+
+hrms.swynix.com {
+    reverse_proxy localhost:8082
+}

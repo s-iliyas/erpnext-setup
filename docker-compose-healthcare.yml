@@ -1,0 +1,28 @@
+services:
+  frappe-healthcare:
+    build:
+      context: .
+      dockerfile: Dockerfile.healthcare
+    container_name: frappe-healthcare
+    ports:
+      - "8081:8000"
+      - "3308:3306"
+      - "6381:6379"
+    volumes:
+      - frappe_sites_healthcare:/home/frappe/frappe-bench/sites
+      - mariadb_data_healthcare:/var/lib/mysql
+      - frappe_logs_healthcare:/var/log/supervisor
+    environment:
+      - SITE_NAME=healthcare.swynix.com
+      - MARIADB_ROOT_PASSWORD=rootpassword
+      - ADMIN_PASSWORD=admin
+    restart: unless-stopped
+    hostname: frappe-healthcare
+
+volumes:
+  frappe_sites_healthcare:
+    driver: local
+  mariadb_data_healthcare:
+    driver: local
+  frappe_logs_healthcare:
+    driver: local

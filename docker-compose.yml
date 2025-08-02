@@ -1,7 +1,9 @@
 services:
-  frappe-healthcare:
-    build: .
-    container_name: frappe-healthcare
+  frappe-erpnext:
+    build:
+      context: .
+      dockerfile: Dockerfile.erpnext
+    container_name: frappe-erpnext
     ports:
       - "8080:8000"
       - "3307:3306"
@@ -11,11 +13,11 @@ services:
       - mariadb_data:/var/lib/mysql
       - frappe_logs:/var/log/supervisor
     environment:
-      - SITE_NAME=healthcare.swynix.com
+      - SITE_NAME=erp.swynix.com
       - MARIADB_ROOT_PASSWORD=rootpassword
       - ADMIN_PASSWORD=admin
     restart: unless-stopped
-    hostname: frappe-healthcare
+    hostname: frappe-erpnext
 
 volumes:
   frappe_sites:
