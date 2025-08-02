@@ -1,4 +1,4 @@
-.PHONY: up down up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-caddy down-caddy
+.PHONY: up down up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-caddy down-caddy rebuild-erpnext restart-erpnext clean-erpnext
 
 up: up-erpnext up-healthcare up-hrms up-caddy
 
@@ -27,3 +27,16 @@ up-caddy:
 
 down-caddy:
 	docker compose -f docker-compose-caddy.yml down
+
+rebuild-erpnext:
+	docker compose down
+	docker compose build --no-cache
+	docker compose up -d
+
+restart-erpnext:
+	docker compose restart
+
+clean-erpnext:
+	docker compose down
+	docker system prune -f
+	docker volume prune -f
