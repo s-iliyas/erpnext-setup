@@ -31,6 +31,7 @@ RUN apt-get update && apt-get upgrade -y && \
     xfonts-75dpi \
     supervisor \
     redis-server \
+    redis-tools \
     libmariadb-dev \
     mariadb-server \
     mariadb-client \
@@ -117,13 +118,6 @@ COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
 nodaemon=true
 user=root
 
-[program:redis]
-command=/usr/bin/redis-server --save "" --appendonly no
-user=redis
-autorestart=true
-redirect_stderr=true
-stdout_logfile=/var/log/supervisor/redis.log
-
 [program:frappe-web]
 command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench serve --port 8000"
 directory=/home/frappe
@@ -201,8 +195,16 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         nvm use $NODE_VERSION && 
         bench new-site $SITE_NAME --mariadb-root-password rootpassword --admin-password admin && 
         bench use $SITE_NAME && 
+        bench --site $SITE_NAME set-config redis_cache 'redis://redis-shared:6379/2' && 
+        bench --site $SITE_NAME set-config redis_queue 'redis://redis-shared:6379/2' && 
+        bench --site $SITE_NAME set-config redis_socketio 'redis://redis-shared:6379/2' && 
+        bench set-config -g redis_cache 'redis://redis-shared:6379/2' && 
+        bench set-config -g redis_queue 'redis://redis-shared:6379/2' && 
+        bench set-config -g redis_socketio 'redis://redis-shared:6379/2' && 
         bench install-app erpnext && 
-        bench install-app hrms
+        bench install-app hrms &&
+        bench --site $SITE_NAME migrate && 
+        bench build
     "
 fi
 
@@ -213,7 +215,7 @@ EOF
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose ports
-EXPOSE 8000 3306 6379
+EXPOSE 8000 3306
 
 # Set volumes
 VOLUME ["/home/frappe/frappe-bench/sites", "/var/lib/mysql"]

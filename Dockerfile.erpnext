@@ -118,7 +118,7 @@ nodaemon=true
 user=root
 
 [program:frappe-web]
-command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench serve --port 8000"
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli -h redis-shared ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench serve --port 8000"
 directory=/home/frappe
 user=frappe
 autorestart=true
@@ -128,7 +128,7 @@ startretries=10
 startsecs=10
 
 [program:frappe-worker-default]
-command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue default"
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli -h redis-shared ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue default"
 directory=/home/frappe
 user=frappe
 autorestart=true
@@ -138,7 +138,7 @@ startretries=10
 startsecs=10
 
 [program:frappe-worker-long]
-command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue long"
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli -h redis-shared ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue long"
 directory=/home/frappe
 user=frappe
 autorestart=true
@@ -148,7 +148,7 @@ startretries=10
 startsecs=10
 
 [program:frappe-worker-short]
-command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue short"
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli -h redis-shared ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench worker --queue short"
 directory=/home/frappe
 user=frappe
 autorestart=true
@@ -158,7 +158,7 @@ startretries=10
 startsecs=10
 
 [program:frappe-schedule]
-command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench schedule"
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && while ! redis-cli -h redis-shared ping > /dev/null 2>&1; do echo 'Waiting for Redis...'; sleep 5; done && bench schedule"
 directory=/home/frappe
 user=frappe
 autorestart=true
@@ -183,12 +183,11 @@ until mysqladmin ping --silent; do
     sleep 3
 done
 
-# Start Redis
-/usr/bin/redis-server --bind 127.0.0.1 --port 6379 --save "" --appendonly no --daemonize yes
+# Redis is provided by external service
 
 # Wait for Redis to be ready
 echo "Waiting for Redis to start..."
-until redis-cli ping > /dev/null 2>&1; do
+until redis-cli -h redis-shared ping > /dev/null 2>&1; do
     echo "Waiting for Redis..."
     sleep 2
 done
@@ -214,9 +213,12 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         nvm use $NODE_VERSION && 
         bench new-site $SITE_NAME --mariadb-root-password rootpassword --admin-password admin && 
         bench use $SITE_NAME && 
-        bench --site $SITE_NAME set-config redis_cache 'redis://127.0.0.1:6379' && 
-        bench --site $SITE_NAME set-config redis_queue 'redis://127.0.0.1:6379' && 
-        bench --site $SITE_NAME set-config redis_socketio 'redis://127.0.0.1:6379' && 
+        bench --site $SITE_NAME set-config redis_cache 'redis://redis-shared:6379/0' && 
+        bench --site $SITE_NAME set-config redis_queue 'redis://redis-shared:6379/0' && 
+        bench --site $SITE_NAME set-config redis_socketio 'redis://redis-shared:6379/0' && 
+        bench set-config -g redis_cache 'redis://redis-shared:6379/0' && 
+        bench set-config -g redis_queue 'redis://redis-shared:6379/0' && 
+        bench set-config -g redis_socketio 'redis://redis-shared:6379/0' && 
         bench install-app erpnext &&
         bench --site $SITE_NAME migrate && 
         bench build
@@ -230,7 +232,7 @@ EOF
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose ports
-EXPOSE 8000 3306 6379
+EXPOSE 8000 3306
 
 # Set volumes
 VOLUME ["/home/frappe/frappe-bench/sites", "/var/lib/mysql"]

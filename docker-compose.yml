@@ -1,4 +1,16 @@
 services:
+  redis-shared:
+    image: redis:7-alpine
+    container_name: redis-shared
+    ports:
+      - "6370:6379"
+    volumes:
+      - redis_shared_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - frappe-network
+
   frappe-erpnext:
     build:
       context: .
@@ -7,7 +19,6 @@ services:
     ports:
       - "8080:8000"
       - "3307:3306"
-      - "6380:6379"
     volumes:
       - frappe_sites:/home/frappe/frappe-bench/sites
       - mariadb_data:/var/lib/mysql
@@ -16,8 +27,17 @@ services:
       - SITE_NAME=erp.swynix.com
       - MARIADB_ROOT_PASSWORD=rootpassword
       - ADMIN_PASSWORD=admin
+      - REDIS_DB=0
     restart: unless-stopped
     hostname: frappe-erpnext
+    depends_on:
+      - redis-shared
+    networks:
+      - frappe-network
+
+networks:
+  frappe-network:
+    driver: bridge
 
 volumes:
   frappe_sites:
@@ -25,4 +45,6 @@ volumes:
   mariadb_data:
     driver: local
   frappe_logs:
+    driver: local
+  redis_shared_data:
     driver: local

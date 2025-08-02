@@ -1,4 +1,16 @@
 services:
+  redis-shared:
+    image: redis:7-alpine
+    container_name: redis-shared
+    ports:
+      - "6370:6379"
+    volumes:
+      - redis_shared_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - frappe-network
+
   frappe-healthcare:
     build:
       context: .
@@ -7,7 +19,6 @@ services:
     ports:
       - "8081:8000"
       - "3308:3306"
-      - "6381:6379"
     volumes:
       - frappe_sites_healthcare:/home/frappe/frappe-bench/sites
       - mariadb_data_healthcare:/var/lib/mysql
@@ -16,8 +27,17 @@ services:
       - SITE_NAME=healthcare.swynix.com
       - MARIADB_ROOT_PASSWORD=rootpassword
       - ADMIN_PASSWORD=admin
+      - REDIS_DB=1
     restart: unless-stopped
     hostname: frappe-healthcare
+    depends_on:
+      - redis-shared
+    networks:
+      - frappe-network
+
+networks:
+  frappe-network:
+    driver: bridge
 
 volumes:
   frappe_sites_healthcare:
@@ -25,4 +45,6 @@ volumes:
   mariadb_data_healthcare:
     driver: local
   frappe_logs_healthcare:
+    driver: local
+  redis_shared_data:
     driver: local
