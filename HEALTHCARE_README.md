@@ -26,44 +26,6 @@ sudo apt-get install \
   pkg-config -y
 ```
 
----
-
-## 🛠 Manual Setup for MariaDB 12 (If not using system `apt` version)
-
-### Add MariaDB Keyring
-
-```bash
-sudo mkdir -p /etc/apt/keyrings
-sudo curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
-```
-
-### Add MariaDB 12 Repo
-
-```bash
-sudo nano /etc/apt/sources.list.d/mariadb.sources
-```
-
-Paste the following into the file:
-
-```text
-# MariaDB 12.0 repository list - created 2025-08-01
-X-Repolib-Name: MariaDB
-Types: deb
-URIs: https://mirror.bharatdatacenter.com/mariadb/repo/12.0/ubuntu
-Suites: noble
-Components: main main/debug
-Signed-By: /etc/apt/keyrings/mariadb-keyring.pgp
-```
-
-Then update and install:
-
-```bash
-sudo apt-get update
-sudo apt-get install mariadb-server -y
-```
-
----
-
 ## 🔐 Secure MariaDB
 
 ```bash
@@ -149,12 +111,6 @@ rm wkhtmltox_*.deb
 ## 🧪 Setup Python Virtualenv
 
 ```bash
-sudo apt install  python3-venv -y
-python3 -m venv env
-source env/bin/activate
-
-# ( or )
-
 # Install virtualenv if not already installed
 pip install virtualenv
 
@@ -182,37 +138,22 @@ bench init --frappe-branch version-15 frappe-bench # (can use any name frappe-be
 cd frappe-bench
 ```
 
-### If root user command error
-
-```bash
-sudo adduser newusername
-sudo deluser newusername sudo
-su - newusername
-
-```
-
-
 ### Create a New Site:
 
 ```bash
-bench new-site iliyas.com
+bench new-site healthcare.swynix.com
 
-# can add multiple sites
-bench new-site iliyas.co
-
-bench new-site iliyas.in
-
-# you have select one site
-
-bench use iliyas.com
+bench use healthcare.swynix.com
 
 # get erpnext 
 
-bench get-app erpnext  --branch version-15 
+bench get-app erpnext --branch version-15 
+bench get-app healthcare --branch version-15 
 
 # install erpnext in bench
 
 bench --site iliyas.com install-app erpnext
+bench --site iliyas.com install-app healthcare
 
 bench start
 
@@ -227,14 +168,6 @@ Follow prompts:
 * SystemSettings.enable\_scheduler is UNSET (you can enable it later)
 
 ---
-
-For production
-
-```bash
-git clone https://github.com/frappe/frappe_docker
-cd frappe_docker
-docker compose -f pwd.yml up -d --build
-```
 
 ✅ **Done!**
 You now have a working setup of Frappe Framework with MariaDB 12 and all necessary dependencies.

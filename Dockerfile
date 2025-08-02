@@ -1,0 +1,222 @@
+FROM ubuntu:24.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV NVM_DIR="/home/frappe/.nvm"
+ENV NODE_VERSION=22
+ENV BENCH_PATH="/opt/frappe-bench"
+ENV SITE_NAME="healthcare.swynix.com"
+
+# Prevent services from starting during package installation
+RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d && \
+    chmod +x /usr/sbin/policy-rc.d
+
+# System preparation and dependencies
+RUN apt-get update && apt-get upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git \
+    python3-dev \
+    python3-setuptools \
+    python3-pip \
+    python3-venv \
+    virtualenv \
+    apt-transport-https \
+    curl \
+    python-is-python3 \
+    pkg-config \
+    wget \
+    xvfb \
+    libfontconfig \
+    xfonts-75dpi \
+    supervisor \
+    redis-server \
+    libmariadb-dev \
+    mariadb-server \
+    mariadb-client \
+    sudo \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create frappe user after sudo is installed
+RUN useradd -m -s /bin/bash frappe && \
+    echo "frappe ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Install wkhtmltopdf dependencies first
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    fontconfig \
+    libjpeg-turbo8 \
+    xfonts-base \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install wkhtmltopdf
+RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb && \
+    dpkg -i wkhtmltox_*.deb && \
+    rm wkhtmltox_*.deb
+
+# Install Node.js via NVM for frappe user
+USER frappe
+ENV NVM_DIR="/home/frappe/.nvm"
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && \
+    nvm install $NODE_VERSION && \
+    nvm use $NODE_VERSION && \
+    npm install -g yarn
+
+USER root
+
+# Configure MariaDB - Initialize database directory
+RUN mysql_install_db --user=mysql --datadir=/var/lib/mysql
+
+# Add MariaDB UTF-8 configuration
+RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
+    echo "character-set-client-handshake = FALSE" >> /etc/mysql/my.cnf && \
+    echo "character-set-server = utf8mb4" >> /etc/mysql/my.cnf && \
+    echo "collation-server = utf8mb4_unicode_ci" >> /etc/mysql/my.cnf && \
+    echo "" >> /etc/mysql/my.cnf && \
+    echo "[mysql]" >> /etc/mysql/my.cnf && \
+    echo "default-character-set = utf8mb4" >> /etc/mysql/my.cnf
+
+# Switch to frappe user
+USER frappe
+WORKDIR /home/frappe
+
+# Setup Python virtual environment
+RUN python3 -m venv env && \
+    . env/bin/activate && \
+    pip install --upgrade pip && \
+    pip install frappe-bench
+
+# Initialize bench with Node.js environment
+RUN . env/bin/activate && \
+    . "/home/frappe/.nvm/nvm.sh" && \
+    nvm use $NODE_VERSION && \
+    bench init --frappe-branch version-15 frappe-bench
+
+# Change to bench directory and setup site
+WORKDIR /home/frappe/frappe-bench
+
+# Get ERPNext and Healthcare apps
+RUN . ../env/bin/activate && \
+    . "/home/frappe/.nvm/nvm.sh" && \
+    nvm use $NODE_VERSION && \
+    bench get-app erpnext --branch version-15 && \
+    bench get-app healthcare --branch version-15
+
+# Create supervisord configuration
+USER root
+RUN mkdir -p /var/log/supervisor
+
+COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+user=root
+
+[program:redis]
+command=/usr/bin/redis-server --save "" --appendonly no
+user=redis
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/redis.log
+
+[program:frappe-web]
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench serve --port 8000"
+directory=/home/frappe
+user=frappe
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/frappe-web.log
+
+[program:frappe-worker-default]
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench worker --queue default"
+directory=/home/frappe
+user=frappe
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/frappe-worker-default.log
+
+[program:frappe-worker-long]
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench worker --queue long"
+directory=/home/frappe
+user=frappe
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/frappe-worker-long.log
+
+[program:frappe-worker-short]
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench worker --queue short"
+directory=/home/frappe
+user=frappe
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/frappe-worker-short.log
+
+[program:frappe-schedule]
+command=bash -c "source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && cd /home/frappe/frappe-bench && bench schedule"
+directory=/home/frappe
+user=frappe
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/frappe-schedule.log
+EOF
+
+# Create entrypoint script
+COPY <<EOF /usr/local/bin/entrypoint.sh
+#!/bin/bash
+set -e
+
+# Start MariaDB directly
+/usr/bin/mysqld_safe --user=mysql --datadir=/var/lib/mysql &
+
+# Wait for MariaDB to be ready
+echo "Waiting for MariaDB to start..."
+until mysqladmin ping --silent; do
+    echo "Waiting for MariaDB..."
+    sleep 3
+done
+
+# Set root password and configure database
+mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'rootpassword';" 2>/dev/null || \
+mysql -u root -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('rootpassword');" 2>/dev/null || \
+mysql -u root -e "UPDATE mysql.user SET Password=PASSWORD('rootpassword') WHERE User='root'; FLUSH PRIVILEGES;" 2>/dev/null || true
+
+# Test connection
+until mysql -u root -prootpassword -e "SELECT 1;" &> /dev/null; do
+    echo "Waiting for MariaDB authentication..."
+    sleep 2
+done
+
+# Check if site exists, if not create it
+if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
+    echo "Creating new site: $SITE_NAME"
+    cd /home/frappe/frappe-bench
+    sudo -u frappe bash -c "
+        source /home/frappe/env/bin/activate && 
+        source /home/frappe/.nvm/nvm.sh && 
+        nvm use $NODE_VERSION && 
+        bench new-site $SITE_NAME --mariadb-root-password rootpassword --admin-password admin && 
+        bench use $SITE_NAME && 
+        bench install-app erpnext && 
+        bench install-app healthcare
+    "
+fi
+
+# Start supervisor
+exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
+EOF
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose ports
+EXPOSE 8000 3306 6379
+
+# Set volumes
+VOLUME ["/home/frappe/frappe-bench/sites", "/var/lib/mysql"]
+
+# Start services
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
