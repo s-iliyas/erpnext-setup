@@ -203,10 +203,19 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench set-config -g redis_socketio 'redis://redis-shared:6379/1' && 
         bench install-app erpnext && 
         bench install-app healthcare &&
-        bench --site $SITE_NAME migrate && 
-        bench build
+        bench --site $SITE_NAME migrate
     "
 fi
+
+# Always build assets on startup to ensure UI works properly
+echo "Building assets..."
+cd /home/frappe/frappe-bench
+sudo -u frappe bash -c "
+    source /home/frappe/env/bin/activate && 
+    source /home/frappe/.nvm/nvm.sh && 
+    nvm use $NODE_VERSION && 
+    bench build
+"
 
 # Start supervisor
 exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
