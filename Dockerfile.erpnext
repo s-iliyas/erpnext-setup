@@ -108,7 +108,7 @@ RUN . ../env/bin/activate && \
     nvm use $NODE_VERSION && \
     bench get-app erpnext --branch version-15 && \
     bench get-app hrms --branch version-15 && \
-    bench get-app insights --branch version-15
+    bench get-app insights --branch version-3
 
 # Create supervisord configuration
 USER root
