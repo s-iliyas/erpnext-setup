@@ -102,11 +102,13 @@ RUN . env/bin/activate && \
 # Change to bench directory and setup site
 WORKDIR /home/frappe/frappe-bench
 
-# Get ERPNext app only
+# Get ERPNext, HRMS and Insights apps
 RUN . ../env/bin/activate && \
     . "/home/frappe/.nvm/nvm.sh" && \
     nvm use $NODE_VERSION && \
-    bench get-app erpnext --branch version-15
+    bench get-app erpnext --branch version-15 && \
+    bench get-app hrms --branch version-15 && \
+    bench get-app insights --branch version-15
 
 # Create supervisord configuration
 USER root
@@ -219,7 +221,9 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench set-config -g redis_cache 'redis://redis-shared:6379/0' && 
         bench set-config -g redis_queue 'redis://redis-shared:6379/0' && 
         bench set-config -g redis_socketio 'redis://redis-shared:6379/0' && 
-        bench install-app erpnext &&
+        bench --site $SITE_NAME install-app erpnext && 
+        bench --site $SITE_NAME install-app hrms && 
+        bench --site $SITE_NAME install-app insights &&
         bench --site $SITE_NAME migrate && 
         bench build
     "
