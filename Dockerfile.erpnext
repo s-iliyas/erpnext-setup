@@ -227,7 +227,7 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench --site $SITE_NAME install-app insights &&
         bench --site $SITE_NAME migrate && 
         bench build &&
-        bench update --reset
+        bench clear-website-cache
     "
 fi
 
