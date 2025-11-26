@@ -219,7 +219,6 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench --site $SITE_NAME set-config redis_queue 'redis://redis-shared:6379/0' && 
         bench --site $SITE_NAME set-config redis_socketio 'redis://redis-shared:6379/0' && 
         bench --site $SITE_NAME set-config developer_mode 1 && 
-        bench --site $SITE_NAME clear-cache && 
         bench set-config -g redis_cache 'redis://redis-shared:6379/0' && 
         bench set-config -g redis_queue 'redis://redis-shared:6379/0' && 
         bench set-config -g redis_socketio 'redis://redis-shared:6379/0' && 
@@ -227,7 +226,8 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench --site $SITE_NAME install-app hrms && 
         bench --site $SITE_NAME install-app insights &&
         bench --site $SITE_NAME migrate && 
-        bench build
+        bench build &&
+        bench update --reset
     "
 fi
 
