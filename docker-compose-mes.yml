@@ -1,0 +1,52 @@
+services:
+  redis-mes:
+    image: redis:7-alpine
+    container_name: redis-mes
+    ports:
+      - "6370:6379"
+    volumes:
+      - redis_mes_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - frappe-network
+
+  frappe-mes:
+    build:
+      context: .
+      dockerfile: Dockerfile.mes
+    container_name: frappe-mes
+    ports:
+      - "8083:8000"
+      - "3310:3306"
+    volumes:
+      - frappe_sites_mes:/home/frappe/frappe-bench/sites
+      - mariadb_data_mes:/var/lib/mysql
+      - frappe_logs_mes:/var/log/supervisor
+    environment:
+      - SITE_NAME=mes.swynix.com
+      - MARIADB_ROOT_PASSWORD=rootpassword
+      - ADMIN_PASSWORD=admin
+      - REDIS_DB=0
+    restart: unless-stopped
+    hostname: frappe-mes
+    depends_on:
+      - redis-mes
+    networks:
+      - frappe-network
+
+networks:
+  frappe-network:
+    driver: bridge
+
+volumes:
+  frappe_sites_mes:
+    driver: local
+  mariadb_data_mes:
+    driver: local
+  frappe_logs_mes:
+    driver: local
+  redis_mes_data:
+    driver: local
+
+

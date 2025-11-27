@@ -1,0 +1,233 @@
+We’ll create 5–6 workspaces:
+	1.	MES – Overview (for managers)
+	2.	Foundry MES
+	3.	Caster MES
+	4.	CRM MES
+	5.	Foil & Reel MES
+	6.	Finishing & Circle MES
+
+
+[7:29 pm, 27/11/2025] Swaroop: Workspace: MES – Overview
+
+Audience: Plant heads, production managers, Jindal core team.
+
+Shortcuts (top row)
+
+Add Shortcuts for:
+	•	Coil (type: DocType, Target: Coil)
+	•	Reel
+	•	Packing Batch
+	•	Melting Batch
+	•	Rolling Plan
+	•	Annealing Log
+	•	Finishing Production Log
+	•	Breakdown Log
+	•	Scrap Log
+	•	Energy Log
+	•	QC Log
+
+This gives management one place to jump into any core MES document.
+
+Quick Lists (below)
+
+Create saved filters (List views) first, then use them as Quick Lists:
+	1.	“Coils in Process”
+	•	Doctype: Coil
+	•	Filter: status = In Process
+	•	Optional: group by current_stage
+	•	Add as Quick List labeled “Coils In Process”
+	2.	“Open Breakdowns”
+	•	Doctype: Breakdown Log
+	•	Filter: status = Open or In Progress
+	•	Add as Quick List: “Open Breakdowns”
+	3.	“Today’s Scrap Logs”
+	•	Doctype: Scrap Log
+	•	Filter: logged_on = Today
+	•	Add as Quick List: “Scrap Today”
+	4.	“Today’s Energy Logs” (optional)
+	•	Doctype: Energy Log
+	•	Filter: from_time >= Today
+	•	Add as Quick List: “Energy Today”
+[7:29 pm, 27/11/2025] Swaroop: 2️⃣ Workspace: Foundry MES
+
+Audience: Melting / Foundry operators & supervisors.
+
+Shortcuts
+
+Add shortcuts:
+	•	Melting Batch (List)
+	•	Melting Batch (New) – you can add a second shortcut with “Create New” action
+	•	Dross Log
+	•	Scrap Log (Foundry)
+	•	Parameter Log
+	•	Energy Log
+	•	Breakdown Log
+	•	QC Log (if Foundry-level tests exist)
+
+For logs that are shared (Scrap, Parameter, Energy, Breakdown, QC), you’ll rely on filters.
+
+Quick Lists
+	1.	“Open Melting Batches”
+	•	Doctype: Melting Batch
+	•	Filter: docstatus = 0 or melt_end_time is empty
+	•	Quick List name: “Melting in Progress”
+	2.	“Today’s Foundry Scrap”
+	•	Doctype: Scrap Log
+	•	Filters:
+	•	department = Foundry
+	•	logged_on = Today
+	•	Quick List: “Scrap – Today”
+	3.	“Today’s Dross”
+	•	Doctype: Dross Log
+	•	Filter: logged_on = Today
+	•	Quick List: “Dross – Today”
+	4.	“Foundry Breakdowns (Open)”
+	•	Doctype: Breakdown Log
+	•	Filters:
+	•	department = Foundry
+	•	status != Closed
+	•	Quick List: “Breakdowns – Foundry”
+[7:30 pm, 27/11/2025] Swaroop: 3️⃣ Workspace: Caster MES
+
+Audience: Caster operators.
+
+Shortcuts
+	•	Casting Operation
+	•	Coil (for viewing the coil card)
+	•	Caster QC Inspection
+	•	Scrap Log
+	•	Breakdown Log
+	•	Parameter Log
+	•	Energy Log
+	•	QC Log
+
+Quick Lists
+	1.	“Coils Just Cast”
+	•	Doctype: Coil
+	•	Filter: source_process = Caster
+	•	Sort by creation (desc)
+	•	Quick List: “Latest Cast Coils”
+	2.	“Caster Scrap Today”
+	•	Doctype: Scrap Log
+	•	Filters:
+	•	department = Caster
+	•	logged_on = Today
+	•	Quick List: “Scrap – Today”
+	3.	“Caster Breakdowns Open”
+	•	Doctype: Breakdown Log
+	•	Filters:
+	•	department = Caster
+	•	status != Closed
+	•	Quick List: “Breakdowns”
+	4.	“Caster QC Pending”
+	•	Doctype: Caster QC Inspection
+	•	Filter: disposition in ("", "Pass", "Hold", "Reject") as needed
+	•	Or just show all recent records.
+[7:30 pm, 27/11/2025] Swaroop: 4️⃣ Workspace: CRM MES
+
+Audience: Cold rolling mill operators & planner.
+
+Shortcuts
+	•	Coil
+	•	Rolling Plan
+	•	Finishing Production Log (used as CRM shift log with dept filter)
+	•	Parameter Log
+	•	Scrap Log
+	•	Breakdown Log
+	•	QC Log
+	•	WIP Movement Log
+
+Quick Lists
+	1.	“Coils at CRM”
+	•	Doctype: Coil
+	•	Filter: current_stage = CRM
+	•	Quick List: “Coils at CRM”
+	2.	“Today’s CRM Plan”
+	•	Doctype: Rolling Plan
+	•	Filter: maybe creation = Today or by coils in current_stage = CRM
+	•	Quick List: “Rolling Plans – Today”
+	3.	“CRM Shift Log – Today”
+	•	Doctype: Finishing Production Log
+	•	Filters:
+	•	department = CRM
+	•	start_time = Today
+	•	Quick List: “Shift Log – CRM”
+	4.	“CRM Scrap – Today”
+	•	Scrap Log with department = CRM, logged_on = Today
+	5.	“CRM Breakdowns (Open)”
+	•	Breakdown Log with department = CRM, status != Closed
+[7:31 pm, 27/11/2025] Swaroop: 5️⃣ Workspace: Foil & Reel MES
+
+Audience: Foil mill & slitting operators.
+
+Shortcuts
+	•	Foil Operation
+	•	Reel
+	•	Packing Batch
+	•	Scrap Log
+	•	QC Log
+	•	Breakdown Log
+	•	Energy Log
+	•	Annealing Log
+
+Quick Lists
+	1.	“Coils at Foil”
+	•	Doctype: Coil
+	•	Filter: current_stage = Foil
+	•	Quick List: “Foil Coils”
+	2.	“Reels Produced Today”
+	•	Doctype: Reel
+	•	Filter: creation = Today
+	•	Quick List: “Reels – Today”
+	3.	“Foil Scrap – Today”
+	•	Scrap Log with department = Foil, logged_on = Today
+	4.	“Foil Annealing – Today”
+	•	Annealing Log with department = Foil, start_time = Today
+	5.	“Foil Breakdowns”
+	•	Breakdown Log with department = Foil, status != Closed
+[7:31 pm, 27/11/2025] Swaroop: 6️⃣ Workspace: Finishing & Circle MES
+
+Audience: CTL, slitting, circle cutting, packing.
+
+Shortcuts
+	•	Finishing Production Log
+	•	Cutting Operation Log
+	•	Slitting Operation Log
+	•	Circle Production Log
+	•	Circle Packing Log
+	•	Packing Batch
+	•	Scrap Log
+	•	QC Log
+	•	Annealing Log
+	•	Breakdown Log
+	•	WIP Movement Log
+
+Quick Lists
+	1.	“Coils at Finishing”
+	•	Coil with current_stage = Finishing
+	2.	“Circle Production – Today”
+	•	Circle Production Log with creation = Today
+	3.	“Packing Batches – Today”
+	•	Packing Batch with packing_date = Today
+	4.	“Finishing Scrap – Today”
+	•	Scrap Log with department = Finishing, logged_on = Today
+	5.	“Circle Scrap – Today”
+	•	Scrap Log with department = Circle, logged_on = Today
+	6.	“Finishing Breakdowns”
+	•	Breakdown Log with department in ("Finishing","Circle"), status != Closed
+[7:31 pm, 27/11/2025] Swaroop: 7️⃣ Workspace: MES Supervisor / Admin (optional)
+
+Here you give full control:
+
+Shortcuts
+	•	All masters:
+	•	Reason Code
+	•	Recipe Master
+	•	Reel
+	•	All universal logs:
+	•	Scrap, Breakdown, Energy, QC, WIP Movement, Parameter, Finishing Production, Annealing Log, etc.
+
+Quick Lists
+	•	“Idle Coils > 48 hours” → based on WIP Movement Log or Coil + custom report.
+	•	“Top Scrap Coils – Last 7 Days”
+	•	“Highest Downtime Machines – Last 30 Days”
