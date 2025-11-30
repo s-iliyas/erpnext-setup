@@ -235,6 +235,21 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
     "
 fi
 
+# Always ensure server scripts are enabled (for both new and existing sites)
+if [ -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
+    echo "Ensuring server scripts are enabled for existing site..."
+    cd /home/frappe/frappe-bench
+    sudo -u frappe bash -c "
+        source /home/frappe/env/bin/activate && 
+        source /home/frappe/.nvm/nvm.sh && 
+        nvm use $NODE_VERSION && 
+        bench use $SITE_NAME && 
+        bench --site $SITE_NAME set-config server_script_enabled true && 
+        bench set-config -g server_script_enabled true &&
+        bench --site $SITE_NAME clear-cache
+    "
+fi
+
 # Start supervisor
 exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
 EOF
