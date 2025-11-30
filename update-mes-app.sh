@@ -15,6 +15,7 @@ fi
 
 # Update app, build, and restart
 docker exec -it frappe-mes bash -c "
+    git config --global --add safe.directory /home/frappe/frappe-bench/apps/swynix_mes 2>/dev/null || true && \
     cd /home/frappe/frappe-bench/apps/swynix_mes && \
     echo '📥 Pulling latest changes...' && \
     git pull && \

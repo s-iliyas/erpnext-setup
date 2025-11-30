@@ -62,7 +62,7 @@ down-mes:
 
 update-mes:
 	@echo "🔄 Updating swynix_mes app..."
-	@docker exec -it frappe-mes bash -c "cd /home/frappe/frappe-bench/apps/swynix_mes && git pull && cd /home/frappe/frappe-bench && source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && bench build --force && bench --site mes.swynix.com clear-cache && bench restart"
+	@docker exec -it frappe-mes bash -c "git config --global --add safe.directory /home/frappe/frappe-bench/apps/swynix_mes 2>/dev/null || true && cd /home/frappe/frappe-bench/apps/swynix_mes && git pull && cd /home/frappe/frappe-bench && source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && bench build --force && bench --site mes.swynix.com clear-cache && bench restart"
 	@echo "✅ MES app updated and restarted"
 
 restart-mes:
