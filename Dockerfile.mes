@@ -223,6 +223,8 @@ if [ ! -d "/home/frappe/frappe-bench/sites/$SITE_NAME" ]; then
         bench set-config -g redis_cache 'redis://redis-mes:6379/0' && 
         bench set-config -g redis_queue 'redis://redis-mes:6379/1' && 
         bench set-config -g redis_socketio 'redis://redis-mes:6379/2' && 
+        bench set-config -g developer_mode 1 && 
+        bench set-config -g server_script_enabled true &&
         bench --site $SITE_NAME install-app erpnext && 
         bench --site $SITE_NAME install-app insights && 
         bench --site $SITE_NAME install-app swynix_mes &&
