@@ -1,4 +1,4 @@
-.PHONY: up down up-all down-all up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-ury down-ury up-caddy down-caddy up-combo down-combo rebuild-erpnext restart-erpnext clean-erpnext clean-all status logs redis-status redis-cli help
+.PHONY: up down up-all down-all up-erpnext down-erpnext up-healthcare down-healthcare up-hrms down-hrms up-ury down-ury up-mes down-mes update-mes restart-mes logs-mes bash-mes up-caddy down-caddy up-combo down-combo rebuild-erpnext restart-erpnext clean-erpnext clean-all status logs redis-status redis-cli help
 
 # Resource optimized setup - runs all services with shared Redis
 up-all:
@@ -50,6 +50,34 @@ up-ury:
 down-ury:
 	docker compose -f docker-compose-ury.yml down
 
+up-mes:
+	@echo "🚀 Starting MES service..."
+	docker compose -f docker-compose-mes.yml up -d --build
+	@echo "✅ MES service starting... Check status with 'make status'"
+
+down-mes:
+	@echo "🛑 Stopping MES service..."
+	docker compose -f docker-compose-mes.yml down
+	@echo "✅ MES service stopped"
+
+update-mes:
+	@echo "🔄 Updating swynix_mes app..."
+	@docker exec -it frappe-mes bash -c "cd /home/frappe/frappe-bench/apps/swynix_mes && git pull && cd /home/frappe/frappe-bench && source /home/frappe/env/bin/activate && source /home/frappe/.nvm/nvm.sh && nvm use 22 && bench build --force && bench --site mes.swynix.com clear-cache && bench restart"
+	@echo "✅ MES app updated and restarted"
+
+restart-mes:
+	@echo "🔄 Restarting MES container..."
+	docker compose -f docker-compose-mes.yml restart
+	@echo "✅ MES container restarted"
+
+logs-mes:
+	@echo "📋 MES logs (Ctrl+C to exit):"
+	@docker logs -f frappe-mes
+
+bash-mes:
+	@echo "🐚 Opening bash shell in MES container..."
+	@docker exec -it frappe-mes bash
+
 up-caddy:
 	docker compose -f docker-compose-caddy.yml up -d --build
 
@@ -87,6 +115,8 @@ logs:
 	@docker logs frappe-hrms --tail 5 2>/dev/null || echo "HRMS not running"
 	@echo "--- Ury ---"
 	@docker logs frappe-ury --tail 5 2>/dev/null || echo "Ury not running"
+	@echo "--- MES ---"
+	@docker logs frappe-mes --tail 5 2>/dev/null || echo "MES not running"
 
 redis-status:
 	@echo "🔴 Redis Status:"
@@ -120,20 +150,26 @@ help:
 	@echo "  make up-healthcare - Start only Healthcare"
 	@echo "  make up-hrms       - Start only HRMS"
 	@echo "  make up-ury        - Start only Ury"
+	@echo "  make up-mes        - Start only MES"
 	@echo ""
 	@echo "🛑 Stop Services:"
 	@echo "  make down-all      - Stop all services"
 	@echo "  make down-combo    - Stop ERPNext + Healthcare"
 	@echo "  make down-erpnext  - Stop ERPNext"
+	@echo "  make down-mes      - Stop MES"
 	@echo ""
 	@echo "📊 Monitoring:"
 	@echo "  make status        - Show container status and resource usage"
 	@echo "  make logs          - Show recent logs from all services"
+	@echo "  make logs-mes      - Show MES logs (follow mode)"
 	@echo "  make redis-status  - Show Redis connection and memory info"
 	@echo "  make redis-cli     - Open Redis CLI"
 	@echo ""
 	@echo "🔧 Maintenance:"
 	@echo "  make rebuild-erpnext - Rebuild ERPNext container"
+	@echo "  make update-mes      - Update swynix_mes app (git pull + build + restart)"
+	@echo "  make restart-mes     - Restart MES container"
+	@echo "  make bash-mes        - Open bash shell in MES container"
 	@echo "  make clean-all       - Stop and clean all Docker resources"
 	@echo ""
 	@echo "🌐 Access URLs:"
@@ -141,3 +177,4 @@ help:
 	@echo "  Healthcare: http://localhost:8081"
 	@echo "  HRMS:      http://localhost:8082"
 	@echo "  Ury:       http://localhost:8083"
+	@echo "  MES:       http://localhost:8083"
