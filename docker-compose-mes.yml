@@ -23,6 +23,8 @@ services:
       - frappe_sites_mes:/home/frappe/frappe-bench/sites
       - mariadb_data_mes:/var/lib/mysql
       - frappe_logs_mes:/var/log/supervisor
+      # Mount local swynix_mes app for development (entire app folder)
+      - ../swynix-mes:/home/frappe/frappe-bench/apps/swynix_mes
     environment:
       - SITE_NAME=mes.swynix.com
       - MARIADB_ROOT_PASSWORD=rootpassword
