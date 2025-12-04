@@ -22,3 +22,7 @@ docker exec -it $CONTAINER_NAME bash -c "
 echo ""
 echo "✅ Server scripts have been enabled."
 echo "Please refresh your browser and try 'Fetch Material' again."
+
+
+
+
