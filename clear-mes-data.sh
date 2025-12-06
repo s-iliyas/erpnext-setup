@@ -1,6 +1,6 @@
 #!/bin/bash
 # Clear MES Data Script
-# Clears all data from Melting Batch and PPC Casting Plan tables
+# Clears all data from MES operational tables (Melting, Casting, QC)
 # Usage: ./clear-mes-data.sh
 
 set -e
@@ -43,8 +43,13 @@ echo ""
 
 # Confirmation prompt
 echo -e "${RED}WARNING: This will DELETE ALL data from:${NC}"
-echo "  - Melting Batch (and child tables)"
 echo "  - PPC Casting Plan (and child tables)"
+echo "  - Melting Batch (and child tables)"
+echo "  - Casting Run (and child tables)"
+echo "  - Mother Coil (Coils)"
+echo "  - Coil QC (and child tables)"
+echo "  - QC Samples (melting / casting) and related logs"
+echo "  - Coil Process Logs"
 echo ""
 read -p "Are you sure you want to continue? (yes/no): " confirm
 
@@ -56,15 +61,56 @@ fi
 echo ""
 echo -e "${YELLOW}Clearing tables...${NC}"
 
-# Execute SQL to clear tables
+# Execute SQL to clear tables (in dependency order - children first, parents last)
 docker exec ${CONTAINER} bash -c "mysql -h 127.0.0.1 -u ${DB_NAME} -p'${DB_PASS}' ${DB_NAME} -e \"
--- Clear Melting Batch child tables first (foreign key dependencies)
+-- ========================================
+-- QC RELATED TABLES
+-- ========================================
+
+-- Clear Coil QC child tables
+DELETE FROM \\\`tabCoil Surface Defect\\\`;
+
+-- Clear Coil QC parent table
+DELETE FROM \\\`tabCoil QC\\\`;
+
+-- Clear Melting QC child tables (element results for spectro samples)
+DELETE FROM \\\`tabMelting Sample Element Result\\\`;
+
+-- Clear unified QC Sample child/parent (melting + casting)
+DELETE FROM \\\`tabQC Sample Element\\\`;
+DELETE FROM \\\`tabQC Sample\\\`;
+
+-- Clear Coil Process Logs
+DELETE FROM \\\`tabCoil Process Log\\\`;
+
+-- ========================================
+-- CASTING RELATED TABLES  
+-- ========================================
+
+-- Clear Mother Coil (depends on Casting Run)
+DELETE FROM \\\`tabMother Coil\\\`;
+
+-- Clear Casting Run child tables
+DELETE FROM \\\`tabCasting Run Coil\\\`;
+
+-- Clear Casting Run parent table
+DELETE FROM \\\`tabCasting Run\\\`;
+
+-- ========================================
+-- MELTING RELATED TABLES
+-- ========================================
+
+-- Clear Melting Batch child tables
 DELETE FROM \\\`tabMelting Batch Raw Material\\\`;
 DELETE FROM \\\`tabMelting Batch Process Log\\\`;
 DELETE FROM \\\`tabMelting Batch Spectro Sample\\\`;
 
 -- Clear Melting Batch parent table
 DELETE FROM \\\`tabMelting Batch\\\`;
+
+-- ========================================
+-- PPC PLANNING TABLES
+-- ========================================
 
 -- Clear PPC Casting Plan child tables
 DELETE FROM \\\`tabPPC Casting Plan SO\\\`;
@@ -84,12 +130,21 @@ fi
 echo ""
 echo -e "${YELLOW}Verifying table counts...${NC}"
 docker exec ${CONTAINER} bash -c "mysql -h 127.0.0.1 -u ${DB_NAME} -p'${DB_PASS}' ${DB_NAME} -e \"
-SELECT 'Melting Batch' as DocType, COUNT(*) as Count FROM \\\`tabMelting Batch\\\`
+SELECT 'PPC Casting Plan' as DocType, COUNT(*) as Count FROM \\\`tabPPC Casting Plan\\\`
+UNION ALL SELECT 'PPC Casting Plan SO', COUNT(*) FROM \\\`tabPPC Casting Plan SO\\\`
+UNION ALL SELECT 'Melting Batch', COUNT(*) FROM \\\`tabMelting Batch\\\`
 UNION ALL SELECT 'Melting Batch Raw Material', COUNT(*) FROM \\\`tabMelting Batch Raw Material\\\`
 UNION ALL SELECT 'Melting Batch Process Log', COUNT(*) FROM \\\`tabMelting Batch Process Log\\\`
 UNION ALL SELECT 'Melting Batch Spectro Sample', COUNT(*) FROM \\\`tabMelting Batch Spectro Sample\\\`
-UNION ALL SELECT 'PPC Casting Plan', COUNT(*) FROM \\\`tabPPC Casting Plan\\\`
-UNION ALL SELECT 'PPC Casting Plan SO', COUNT(*) FROM \\\`tabPPC Casting Plan SO\\\`;
+UNION ALL SELECT 'Melting Sample Element Result', COUNT(*) FROM \\\`tabMelting Sample Element Result\\\`
+UNION ALL SELECT 'Casting Run', COUNT(*) FROM \\\`tabCasting Run\\\`
+UNION ALL SELECT 'Casting Run Coil', COUNT(*) FROM \\\`tabCasting Run Coil\\\`
+UNION ALL SELECT 'Mother Coil', COUNT(*) FROM \\\`tabMother Coil\\\`
+UNION ALL SELECT 'Coil QC', COUNT(*) FROM \\\`tabCoil QC\\\`
+UNION ALL SELECT 'Coil Surface Defect', COUNT(*) FROM \\\`tabCoil Surface Defect\\\`
+UNION ALL SELECT 'QC Sample', COUNT(*) FROM \\\`tabQC Sample\\\`
+UNION ALL SELECT 'QC Sample Element', COUNT(*) FROM \\\`tabQC Sample Element\\\`
+UNION ALL SELECT 'Coil Process Log', COUNT(*) FROM \\\`tabCoil Process Log\\\`;
 \""
 
 # Clear cache
@@ -107,6 +162,8 @@ echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  All MES data has been cleared!${NC}"
 echo -e "${GREEN}========================================${NC}"
+
+
 
 
 
