@@ -68,6 +68,9 @@ echo "  [Annealing Kiosk]"
 echo "    - Annealing Cycle Log"
 echo "    - Annealing Charge (and child tables)"
 echo ""
+echo "  [Stock]"
+echo "    - Stock Entry (and child tables)"
+echo ""
 echo "  [Common]"
 echo "    - Coil Process Logs"
 echo ""
@@ -136,6 +139,16 @@ DELETE FROM \\\`tabRolling Plan Pass\\\`;
 
 -- Clear PPC Rolling Plan parent table
 DELETE FROM \\\`tabPPC Rolling Plan\\\`;
+
+-- ========================================
+-- STOCK ENTRIES
+-- ========================================
+
+-- Clear Stock Entry child tables
+DELETE FROM \\\`tabStock Entry Detail\\\`;
+
+-- Clear Stock Entry parent table
+DELETE FROM \\\`tabStock Entry\\\`;
 
 -- ========================================
 -- COIL PROCESS LOGS (Common)
@@ -220,6 +233,9 @@ UNION ALL SELECT '-- ANNEALING KIOSK --', ''
 UNION ALL SELECT 'Annealing Cycle Log', COUNT(*) FROM \\\`tabAnnealing Cycle Log\\\`
 UNION ALL SELECT 'Annealing Charge', COUNT(*) FROM \\\`tabAnnealing Charge\\\`
 UNION ALL SELECT 'Annealing Charge Coil', COUNT(*) FROM \\\`tabAnnealing Charge Coil\\\`
+UNION ALL SELECT '-- STOCK --', ''
+UNION ALL SELECT 'Stock Entry', COUNT(*) FROM \\\`tabStock Entry\\\`
+UNION ALL SELECT 'Stock Entry Detail', COUNT(*) FROM \\\`tabStock Entry Detail\\\`
 UNION ALL SELECT '-- COMMON --', ''
 UNION ALL SELECT 'Coil Process Log', COUNT(*) FROM \\\`tabCoil Process Log\\\`;
 \""
