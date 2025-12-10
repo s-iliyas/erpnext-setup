@@ -297,8 +297,14 @@ Output example:
 # First, get the credentials
 docker exec frappe-mes cat /home/frappe/frappe-bench/sites/mes.swynix.com/site_config.json
 
+sudo apt install mysql-client-core-8.0
+
 # Restore (replace values with actual credentials)
 zcat backups/your_dump.sql.gz | mysql -h 127.0.0.1 -P 3310 -u <db_name> -p'<db_password>' <db_name>
+
+# example
+
+mysql -h 127.0.0.1 -P 3310 -u _fc8f8e51235a2db9 -p'X8Sapvys2haLpIao' _fc8f8e51235a2db9 < backups/your_dump.sql
 ```
 
 #### Option 2: Restore to a new/different database
