@@ -236,6 +236,104 @@ cd frappe_docker
 docker compose -f pwd.yml up -d --build
 ```
 
+---
+
+## 💾 Database Backup & Restore (Docker)
+
+### Take a Database Backup
+
+Use the `db-dump.sh` script to create a full database dump:
+
+```bash
+cd erpnext-setup
+
+# Basic usage (saves to ./backups directory)
+./db-dump.sh
+
+# Or specify custom output directory
+./db-dump.sh /path/to/your/backups
+```
+
+This creates a compressed `.sql.gz` file in the `backups/` directory.
+
+---
+
+### Check Database Credentials
+
+Database credentials are stored in the site config inside the container:
+
+```bash
+docker exec frappe-mes cat /home/frappe/frappe-bench/sites/mes.swynix.com/site_config.json
+```
+
+Output example:
+
+```json
+{
+  "db_name": "_fc8f8e51235a2db9",
+  "db_password": "tZVG3Q0jqK1qbNgD",
+  "db_type": "mariadb",
+  ...
+}
+```
+
+**Connection details from host machine:**
+
+| Parameter | Value |
+|-----------|-------|
+| Host | `localhost` or `127.0.0.1` |
+| Port | `3310` (mapped in docker-compose-mes.yml) |
+| User | Same as `db_name` from site_config.json |
+| Password | `db_password` from site_config.json |
+| Database | Same as `db_name` from site_config.json |
+
+---
+
+### Restore Database
+
+#### Option 1: Restore to the same MES Docker database
+
+```bash
+# First, get the credentials
+docker exec frappe-mes cat /home/frappe/frappe-bench/sites/mes.swynix.com/site_config.json
+
+# Restore (replace values with actual credentials)
+zcat backups/your_dump.sql.gz | mysql -h 127.0.0.1 -P 3310 -u <db_name> -p'<db_password>' <db_name>
+```
+
+#### Option 2: Restore to a new/different database
+
+```bash
+# Decompress first
+gunzip backups/your_dump.sql.gz
+
+# Create new database on target server
+mysql -h <new_host> -u root -p -e "CREATE DATABASE mes_new;"
+mysql -h <new_host> -u root -p -e "GRANT ALL ON mes_new.* TO 'mes_user'@'%' IDENTIFIED BY 'your_password';"
+
+# Restore
+mysql -h <new_host> -u mes_user -p'your_password' mes_new < backups/your_dump.sql
+```
+
+#### Option 3: Restore directly without decompressing
+
+```bash
+zcat backups/your_dump.sql.gz | mysql -h <host> -P <port> -u <user> -p'<password>' <database>
+```
+
+---
+
+### Other Useful Scripts
+
+| Script | Description |
+|--------|-------------|
+| `db-dump.sh` | Create database backup |
+| `clear-mes-data.sh` | Clear all MES operational data (kiosks) |
+| `clear-cache.sh` | Clear Frappe cache |
+| `update-mes-app.sh` | Pull latest code and rebuild |
+
+---
+
 ✅ **Done!**
 You now have a working setup of Frappe Framework with MariaDB 12 and all necessary dependencies.
 
