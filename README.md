@@ -305,6 +305,21 @@ zcat backups/your_dump.sql.gz | mysql -h 127.0.0.1 -P 3310 -u <db_name> -p'<db_p
 # example
 
 mysql -h 127.0.0.1 -P 3310 -u _fc8f8e51235a2db9 -p'X8Sapvys2haLpIao' _fc8f8e51235a2db9 < backups/your_dump.sql
+
+# or
+
+# First, copy the dump file into the container
+docker cp backups/_fc8f8e51235a2db9_20251210_223240.sql frappe-mes:/tmp/
+
+# Then restore from inside the container
+docker exec frappe-mes bash -c "mysql -h 127.0.0.1 -u _fc8f8e51235a2db9 -p'X8Sapvys2haLpIao' _fc8f8e51235a2db9 < /tmp/_fc8f8e51235a2db9_20251210_223240.sql"
+
+# Clean up the temp file
+docker exec frappe-mes rm /tmp/_fc8f8e51235a2db9_20251210_223240.sql
+
+# Clear cache after restore
+docker exec frappe-mes bash -c "cd /home/frappe/frappe-bench && /home/frappe/env/bin/bench --site mes.swynix.com clear-cache"
+
 ```
 
 #### Option 2: Restore to a new/different database
